@@ -4,7 +4,7 @@ import {
   INodeType,
   INodeTypeDescription,
   IHttpRequestMethods,
-  IRequestOptions,
+  IHttpRequestOptions,
   IDataObject,
 } from 'n8n-workflow';
 
@@ -192,7 +192,8 @@ export class ClipMint implements INodeType {
         },
         default: '',
         placeholder: 'https://cdn.kie.ai/videos/generated-123.mp4',
-        description: 'URL to external video (Kie.ai, D-ID, RunwayML, etc.). Video will be downloaded to ClipMint before publishing.',
+        description:
+          'URL to external video (Kie.ai, D-ID, RunwayML, etc.). Video will be downloaded to ClipMint before publishing.',
       },
       {
         displayName: 'Save to Library',
@@ -226,7 +227,8 @@ export class ClipMint implements INodeType {
             name: 'accountId',
             type: 'string',
             default: '',
-            description: 'Specific account ID to post from. If not provided, uses the default account for the platform.',
+            description:
+              'Specific account ID to post from. If not provided, uses the default account for the platform.',
           },
           {
             displayName: 'Title',
@@ -240,7 +242,8 @@ export class ClipMint implements INodeType {
             name: 'scheduledFor',
             type: 'dateTime',
             default: '',
-            description: 'Schedule the post for a future time (ISO 8601 format). Leave empty to publish immediately.',
+            description:
+              'Schedule the post for a future time (ISO 8601 format). Leave empty to publish immediately.',
           },
         ],
       },
@@ -379,6 +382,8 @@ export class ClipMint implements INodeType {
     ],
   };
 
+  
+
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
     const items = this.getInputData();
     const returnData: INodeExecutionData[] = [];
@@ -387,16 +392,21 @@ export class ClipMint implements INodeType {
 
     const credentials = await this.getCredentials('clipMintApi');
     const baseURL = (credentials.baseUrl as string) || 'https://clipmint.ai';
+    const buildUrl = (base: string, path: string): string => {
+      const cleanBase = base.replace(/\/+$/, '');
+      const cleanPath = path.startsWith('/') ? path : `/${path}`;
+      return `${cleanBase}${cleanPath}`;
+    };
 
     for (let i = 0; i < items.length; i++) {
       try {
-        let responseData;
+        let responseData: any;
 
         if (resource === 'post') {
           if (operation === 'create') {
             const platform = this.getNodeParameter('platform', i) as string;
             const content = this.getNodeParameter('content', i) as string;
-            
+
             // Get mediaSource with backward compatibility: default to 'none' but allow legacy clipId
             let mediaSource: string;
             try {
@@ -405,7 +415,7 @@ export class ClipMint implements INodeType {
               // Legacy workflow without mediaSource - default to 'none'
               mediaSource = 'none';
             }
-            
+
             const additionalFields = this.getNodeParameter('additionalFields', i) as {
               accountId?: string;
               title?: string;
@@ -424,7 +434,9 @@ export class ClipMint implements INodeType {
             } else if (mediaSource === 'externalUrl') {
               const externalVideoUrl = this.getNodeParameter('externalVideoUrl', i) as string;
               if (!externalVideoUrl) {
-                throw new Error('External Video URL is required when using External Video URL media source');
+                throw new Error(
+                  'External Video URL is required when using External Video URL media source',
+                );
               }
               const saveToLibrary = this.getNodeParameter('saveToLibrary', i) as boolean;
               body.externalVideoUrl = externalVideoUrl;
@@ -443,20 +455,18 @@ export class ClipMint implements INodeType {
             if (additionalFields.title) body.title = additionalFields.title;
             if (additionalFields.scheduledFor) body.scheduledFor = additionalFields.scheduledFor;
 
-            const options: IRequestOptions = {
+            const options: IHttpRequestOptions = {
               method: 'POST' as IHttpRequestMethods,
-              baseURL,
-              uri: '/api/v1/publish',
+              url: buildUrl(baseURL, '/api/v1/publish'),
               body,
               json: true,
             };
 
-            responseData = await this.helpers.requestWithAuthentication.call(
+            responseData = await this.helpers.httpRequestWithAuthentication.call(
               this,
               'clipMintApi',
               options,
             );
-
           } else if (operation === 'getMany') {
             const limit = this.getNodeParameter('limit', i) as number;
             const filters = this.getNodeParameter('filters', i) as {
@@ -466,51 +476,46 @@ export class ClipMint implements INodeType {
 
             const qs: IDataObject = { limit };
             if (filters.status) qs.status = filters.status;
-            if (filters.offset) qs.offset = filters.offset;
+            if (filters.offset !== undefined) qs.offset = filters.offset;
 
-            const options: IRequestOptions = {
+            const options: IHttpRequestOptions = {
               method: 'GET' as IHttpRequestMethods,
-              baseURL,
-              uri: '/api/v1/posts',
+              url: buildUrl(baseURL, '/api/v1/posts'),
               qs,
               json: true,
             };
 
-            responseData = await this.helpers.requestWithAuthentication.call(
+            responseData = await this.helpers.httpRequestWithAuthentication.call(
               this,
               'clipMintApi',
               options,
             );
 
             responseData = responseData.posts;
-
           } else if (operation === 'delete') {
             const postId = this.getNodeParameter('postId', i) as string;
 
-            const options: IRequestOptions = {
+            const options: IHttpRequestOptions = {
               method: 'DELETE' as IHttpRequestMethods,
-              baseURL,
-              uri: `/api/v1/posts/${postId}`,
+              url: buildUrl(baseURL, `/api/v1/posts/${postId}`),
               json: true,
             };
 
-            responseData = await this.helpers.requestWithAuthentication.call(
+            responseData = await this.helpers.httpRequestWithAuthentication.call(
               this,
               'clipMintApi',
               options,
             );
           }
-
         } else if (resource === 'account') {
           if (operation === 'getMany') {
-            const options: IRequestOptions = {
+            const options: IHttpRequestOptions = {
               method: 'GET' as IHttpRequestMethods,
-              baseURL,
-              uri: '/api/v1/accounts',
+              url: buildUrl(baseURL, '/api/v1/accounts'),
               json: true,
             };
 
-            responseData = await this.helpers.requestWithAuthentication.call(
+            responseData = await this.helpers.httpRequestWithAuthentication.call(
               this,
               'clipMintApi',
               options,
@@ -518,20 +523,18 @@ export class ClipMint implements INodeType {
 
             responseData = responseData.accounts;
           }
-
         } else if (resource === 'clip') {
           if (operation === 'getMany') {
             const limit = this.getNodeParameter('limit', i) as number;
 
-            const options: IRequestOptions = {
+            const options: IHttpRequestOptions = {
               method: 'GET' as IHttpRequestMethods,
-              baseURL,
-              uri: '/api/v1/clips',
+              url: buildUrl(baseURL, '/api/v1/clips'),
               qs: { limit },
               json: true,
             };
 
-            responseData = await this.helpers.requestWithAuthentication.call(
+            responseData = await this.helpers.httpRequestWithAuthentication.call(
               this,
               'clipMintApi',
               options,
@@ -542,11 +545,10 @@ export class ClipMint implements INodeType {
         }
 
         if (Array.isArray(responseData)) {
-          returnData.push(...responseData.map((item) => ({ json: item })));
+          returnData.push(...responseData.map((item: any) => ({ json: item })));
         } else {
           returnData.push({ json: responseData });
         }
-
       } catch (error) {
         if (this.continueOnFail()) {
           returnData.push({ json: { error: (error as Error).message } });
