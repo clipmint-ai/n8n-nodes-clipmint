@@ -2,8 +2,7 @@
     "name": "n8n-nodes-clipmint",
     "version": "0.1.2",
     "description": "n8n community node for ClipMint - AI Content Engine & Social Media Scheduler",
-    "keywords":
-    [
+    "keywords": [
         "n8n-community-node-package",
         "social-media",
         "automation",
@@ -15,19 +14,16 @@
     ],
     "license": "MIT",
     "homepage": "https://clipmint.ai",
-    "author":
-    {
+    "author": {
         "name": "ClipMint",
         "email": "support@clipmint.ai"
     },
-    "repository":
-    {
+    "repository": {
         "type": "git",
-        "url": "https://github.com/clipmint-ai/n8n-nodes-clipmint.git"
+        "url": "git+https://github.com/clipmint-ai/n8n-nodes-clipmint.git"
     },
     "main": "dist/index.js",
-    "scripts":
-    {
+    "scripts": {
         "build": "tsc && npm run copy-assets",
         "copy-assets": "node ./scripts/copy-assets.cjs",
         "dev": "tsc --watch",
@@ -35,24 +31,19 @@
         "lintfix": "eslint nodes credentials --ext .ts --fix",
         "prepublishOnly": "npm run build"
     },
-    "files":
-    [
+    "files": [
         "dist"
     ],
-    "n8n":
-    {
+    "n8n": {
         "n8nNodesApiVersion": 1,
-        "credentials":
-        [
+        "credentials": [
             "dist/credentials/ClipMintApi.credentials.js"
         ],
-        "nodes":
-        [
+        "nodes": [
             "dist/nodes/ClipMint/ClipMint.node.js"
         ]
     },
-    "devDependencies":
-    {
+    "devDependencies": {
         "@types/node": "^20.0.0",
         "@typescript-eslint/eslint-plugin": "^6.0.0",
         "@typescript-eslint/parser": "^6.0.0",
@@ -61,8 +52,7 @@
         "n8n-workflow": "^1.0.0",
         "typescript": "^5.0.0"
     },
-    "peerDependencies":
-    {
+    "peerDependencies": {
         "n8n-workflow": "*"
     }
 }
