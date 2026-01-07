@@ -4,6 +4,8 @@ Official n8n community node for **ClipMint** - AI Content Engine & Social Media 
 
 Automate your social media posting and scheduling with ClipMint's powerful API directly in your n8n workflows.
 
+ClipMint enables fully automated social media publishing and scheduling across multiple platforms from a single n8n workflow.
+
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
 ## Supported Platforms
@@ -32,8 +34,14 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 ```bash
 npm install n8n-nodes-clipmint
 ```
+> ⚠ **Windows note:**  
+> If you are running n8n on Windows and encounter issues installing via the Community Nodes UI,
+> you can install manually using `npm install n8n-nodes-clipmint` and restart n8n.
+> This is a known limitation with some Windows + Node setups.
+
 
 ## Credentials
+ClipMint uses API key authentication for all requests.
 
 ### Get Your API Key
 
